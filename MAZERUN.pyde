@@ -3,7 +3,7 @@ stack = []
 grid = []        
 cols = None
 rows = None
-w = 50      
+w = 100      
 
 # the current cell visited
 current = None
@@ -148,11 +148,12 @@ def setup():
     current = grid[0]
     current.visited = True
        
-       
+done = False
 def draw():
     global stack
     global grid
     global current
+    global done
     
     background(200)
     
@@ -180,3 +181,8 @@ def draw():
     elif len(stack) > 0:
         current = stack[-1]
         stack.pop()
+        
+    elif done == False:
+        done = True
+        for i in grid: 
+            print(i.walls)
