@@ -4,7 +4,7 @@ Maze runner prototype game built using Processing Python.
 ## Get Started: Dijkstra Algorithm
 1. Clone this repository `git clone https://github.com/mihkuno/MAZERUN.git`
 2. Open the `template` folder
-3. Open `maze.py` 
+3. Open `dijkstra.py` 
 
 ## Get Started: User Interface
 1. Download the [Processing](https://processing.org/download) development environment
