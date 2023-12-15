@@ -12,6 +12,8 @@ right_key_pressed = False
     
 def setup():
     size(600, 600)
+    
+    # animate initial maze generation
     frameRate(20)
     
     # create the grid
@@ -26,13 +28,14 @@ def draw():
 
     if status == 'generate':
         # generate wall paths on grid
-        isGenerated = Maze.generate()
+        Maze.generate()
         
-        if isGenerated is True:
-            print('Maze generation complete')
-            frameRate(60)
+        if Maze.isGenerated is True:
             status = 'game'
-
+            frameRate(60)
+            
+            print('Maze generation complete')
+            
 
 def keyPressed():
     global status

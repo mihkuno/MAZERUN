@@ -3,10 +3,16 @@ stack = []
 grid = []        
 cols = None
 rows = None
-w = 30    
+w = 50    
+isGenerated = False
 
-# the current cell visited
+# global cells
 current = None
+target = None
+
+# used for control lerp
+prevX = None
+prevY = None
 
 # get the one-dimension-grid index of cell 
 def index(row, col):
@@ -16,6 +22,7 @@ def index(row, col):
         return -1
     
     return row + (col * cols)
+
 
 def removeWalls(curr, next):
     x = curr.row - next.row
@@ -44,39 +51,26 @@ class Cell:
         self.col = col
         self.walls = [True,True,True,True] # trbl
         self.visited = False
-        self.finish = False
 
         # assign cell neighbors on create()       
         self.neighbors = [None, None, None, None]
-                
-            
-    def highlight(self):
-        global w
-        x = self.row * w
-        y = self.col * w        
-        noStroke()
-        fill(235, 77, 75, 200)
-        rect(x+6,y+6,w-11,w-11)
-        
-        
-    def show(self):
+    
+    def block(self):
         global w
         x = self.row * w
         y = self.col * w
         
         if self.visited:
-            # put a rect on the visited cell
             noStroke()
             fill(250, 200)
             rect(x,y,w,w)
             
+    def grid(self):
+        global w
         
-        if self.finish:
-            # put a rect on the finish cell
-            noStroke()
-            fill(0, 210, 211, 200)
-            rect(x,y,w,w)
-            
+        x = self.row * w
+        y = self.col * w
+        
         noFill()
         stroke(10)
         strokeWeight(2) 
@@ -85,8 +79,7 @@ class Cell:
         if self.walls[1]: line(x+w,y,x+w,y+w) # tr-br right
         if self.walls[2]: line(x+w,y+w,x,y+w) # br-bl bottom 
         if self.walls[3]: line(x,y+w,x,y)     # bl-tl left
-        
-        
+                
     def getRandNeighbor(self):
         # randomly select unvisited neighbors
         selection = []
@@ -104,7 +97,6 @@ class Cell:
         return None
         
         
-
 def create():
     global w
     global cols
@@ -135,51 +127,104 @@ def create():
         if bCellIx != -1: cell.neighbors[2] = grid[bCellIx]
         if lCellIx != -1: cell.neighbors[3] = grid[lCellIx]
     
-    # set the last cell of the grid as target
-    target = grid[-1]
-    target.finish = True
-    
     # set first cell of grid as current visited
     current = grid[0]
-    current.visited = True
-    
+            
     
 def render():
-    # (re)draw all the cells
+    global w
+    global current
+    global target
+    global prevX
+    global prevY
+    global isGenerated
+
+
+    # (re)draw all the cell fill    
     for cell in grid:
-        cell.show()
+        cell.block()
         
-    # highlight current cell
-    current.highlight()
+    # render current
+    currX = current.row * w
+    currY = current.col * w
+    
+    if isGenerated:
+        # interpolate current movement
+        if prevX is None and prevY is None:
+            prevX = currX
+            prevY = currY
+            
+        x = lerp(prevX, currX, 0.7)
+        y = lerp(prevY, currY, 0.7)
+    
+        prevX = currX
+        prevY = currY
+    
+    # disable if maze is generating
+    else:
+        x = currX
+        y = currY
+
+    noStroke()
+
+    if current is target:
+        fill(162, 155, 254) # purple
+    else: fill(235, 77, 75) # red
+    rect(x,y,w,w)
+    
+    # overlay target
+    if target is not None:
+        x = target.row * w
+        y = target.col * w
+
+        if current is not target:
+            fill(116, 185, 255) # blue
+        else: fill(162, 155, 254) # purple
+        rect(x,y,w,w)
+
+    # (re)draw all the cell wall
+    for cell in grid:
+        cell.grid()
     
     
 def generate():
     global stack
     global grid
     global current
+    global target
+    global isGenerated
     
-    # STEP 1
+    # STEP 1: mark the current cell as visited
+    current.visited = True
+    
+    # STEP 2
     # choose randomly one of the unvisited neighbors
     next = current.getRandNeighbor()
 
     if next is not None:
-        # STEP 2: push the current cell to the stack
+        # STEP 3: push the current cell to the stack
         stack.append(current)
         
-        # STEP 3: remove the wall between the current and chosen cell
+        # STEP 4: remove the wall between the current and chosen cell
         removeWalls(current, next)
         
-        # STEP 4: mark the chosen cell as visited and push it to the stack
+        # STEP 5: set the chosen cell as the current cell
         current = next
-        current.visited = True
         
     elif len(stack) > 0:
         current = stack[-1]
         stack.pop()
         
+    elif not isGenerated: # when maze is generated 
+        isGenerated = True # set this to true
+        
+        # select random cell in grid and set as the target cell
+        randIx = int(random(len(grid)))
+        target = grid[randIx]
+        
     else: return True
     
-
+    
 def moveTop():
     global current
     if (current.neighbors[0] is not None) and (current.walls[0] is False):
