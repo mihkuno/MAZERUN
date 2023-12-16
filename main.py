@@ -11,7 +11,7 @@ stack = []
 grid = []        
 cols = None
 rows = None
-w = 10
+w = 100
 isGenerated = False
 
 # global cells
@@ -119,23 +119,6 @@ def generate():
         target = grid[randIx]
 
 
-def clearCurrent():  
-   global current
-   global w
-   
-   x = current.row * w
-   y = current.col * w
-   
-   # clear the current
-   color = (239, 239, 239) 
-      
-   if current is target:
-      color = (162, 155, 254) 
-   
-   pygame.draw.rect(screen, color, (x, y, w, w))
-   renderEdge(current)
-
-
 def lerp(a, b, t):
     return a + t * (b - a)
 
@@ -181,29 +164,82 @@ def refresh():
 def moveUp():
     global current
     if (current.neighbors[0] is not None) and (current.walls[0] is False):
-        current = current.neighbors[0]
-        refresh()
+        next = current.neighbors[0]
+        interpolateMovement(next)
 
 
 def moveRight():
     global current
     if (current.neighbors[1] is not None) and (current.walls[1] is False):
-         current = current.neighbors[1]
-         refresh()
-    
+        next = current.neighbors[1]
+        interpolateMovement(next)
+
     
 def moveDown():
     global current
     if (current.neighbors[2] is not None) and (current.walls[2] is False):
-         current = current.neighbors[2]
-         refresh()
-    
+        next = current.neighbors[2]
+        interpolateMovement(next)
+
     
 def moveLeft():
     global current
     if (current.neighbors[3] is not None) and (current.walls[3] is False):
-         current = current.neighbors[3]
-         refresh()
+        next = current.neighbors[3]
+        interpolateMovement(next)
+
+
+def interpolateMovement(next):
+   global current
+   global previous
+   global prevX
+   global prevY   
+   global w
+      
+   startX = current.row * w
+   startY = current.col * w
+   nextX = next.row * w
+   nextY = next.col * w
+
+   steps = 50  # number of steps for smoother interpolation   
+
+   for step in range(steps + 1):
+      
+      # if not target, redraw current
+      if current is not target:
+         current.drawBlock()
+         
+      # create a new current block to interpolate next
+      t = step / steps
+      currentX = lerp(startX, nextX, t)
+      currentY = lerp(startY, nextY, t)
+      
+      color = (235, 77, 75) # focus color
+      pygame.draw.rect(screen, color, (currentX, currentY, w, w))    
+      
+      # draw the finish block on top of current
+      if current is target:
+         current.drawFinish()
+      # draw the finish block on top of next
+      elif next is target:
+         next.drawFinish()
+         
+      # redraw the cell grid on top of the block
+      current.drawGrid()
+      next.drawGrid()
+      
+      # Update the display
+      pygame.display.flip()
+
+      # Pause briefly to show the movement (you can adjust the duration)
+      pygame.time.delay(1)    
+
+   # Update the current cell
+   current = next
+
+   # Save the final position for the next interpolation
+   prevX = currentX
+   prevY = currentY
 
 
 def onKeyType(event):
@@ -288,16 +324,13 @@ class Cell:
          
       
    def drawBlock(self):
-      global current
-      global target
       global w
       
       x = self.row * w
       y = self.col * w
-      
-      if (self is not target) and (self is not current):   
-         color = (239, 239, 239) 
-         pygame.draw.rect(screen, color, (x, y, w, w))
+       
+      color = (239, 239, 239) 
+      pygame.draw.rect(screen, color, (x, y, w, w))
          
          
    def drawFocus(self):
@@ -315,14 +348,24 @@ class Cell:
       
       
    def drawTarget(self):
-      global target
       global w
-      
-      x = target.row * w
-      y = target.col * w
+
+      x = self.row * w
+      y = self.col * w
       color = (52, 216, 217)
       
       pygame.draw.rect(screen, color, (x, y, w, w))
+      
+   
+   def drawFinish(self):
+      global w
+      
+      x = self.row * w
+      y = self.col * w
+      color = (162, 155, 254)
+      
+      pygame.draw.rect(screen, color, (x, y, w, w))
+      
          
    
    def getRandNeighbor(self):
@@ -421,7 +464,7 @@ def draw():
    # game control
    while True:
       eventListener()
-
+      
       # Update the display
       pygame.display.flip()
       
