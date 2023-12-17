@@ -357,10 +357,16 @@ def render():
       target.drawTarget()
       target.drawGrid()
    
+   # set up the framerate clock
+   clock = pygame.time.Clock()
+
    # start game controls
    while True:
       eventListener()
       
       # Update the display
       pygame.display.flip()
+      
+      # Cap the frame rate
+      clock.tick(60)
       
