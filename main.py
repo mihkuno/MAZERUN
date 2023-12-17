@@ -18,8 +18,8 @@ target = None
 # ================ Helper functions =================    
  
 def removeWalls(curr, next):
-   x = curr.row - next.row
-   y = curr.col - next.col
+   x = curr.col - next.col
+   y = curr.row - next.row
    
    if x == 1: 
       curr.walls[3] = False
@@ -117,10 +117,10 @@ def interpolateMovement(next):
    global current 
    global w
 
-   startX = current.row * w
-   startY = current.col * w
-   nextX = next.row * w
-   nextY = next.col * w
+   startX = current.col * w
+   startY = current.row * w
+   nextX = next.col * w
+   nextY = next.row * w
 
    steps = 50  # number of steps to interpolate
    
@@ -202,8 +202,8 @@ class Cell:
       global w      
       self.row = row
       self.col = col
-      self.x = self.row * w
-      self.y = self.col * w
+      self.x = self.col * w
+      self.y = self.row * w
       
       self.visited = False
       self.walls = [True,True,True,True] # t-r-b-l
@@ -291,24 +291,24 @@ def create():
    rows = height // w
 
    # check if index is outside the grid based on rows and cols
-   outbounds = lambda r, c: r<0 or c<0 or r>rows-1 or c>cols-1
+   outbounds = lambda c, r: r<0 or c<0 or r>rows-1 or c>cols-1
    
    # get the one-dimension-grid index of cell 
-   index = lambda r, c: -1 if outbounds(r,c) else r+c*cols
+   index = lambda c, r: -1 if outbounds(r,c) else c+r*rows
 
    # append all the cells to grid
    for row in range(rows):
       for col in range(cols):
-         cell = Cell(row, col);
+         cell = Cell(col, row)
          grid.append(cell)
 
    # after creating the grid,
    for cell in grid:
       # get neighboring cell index
-      tCellIx = index(cell.row,   cell.col-1)
-      rCellIx = index(cell.row+1, cell.col)
-      bCellIx = index(cell.row,   cell.col+1)
-      lCellIx = index(cell.row-1, cell.col)
+      tCellIx = index(cell.col,   cell.row-1)
+      rCellIx = index(cell.col+1, cell.row)
+      bCellIx = index(cell.col,   cell.row+1)
+      lCellIx = index(cell.col-1, cell.row)
       
       # initialize cell neighbors
       if tCellIx != -1: cell.neighbors[0] = grid[tCellIx]
