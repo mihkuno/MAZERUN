@@ -1,7 +1,7 @@
 import pygame
 import random
-import sys
 import time
+import sys
 
 # ================ Global variables =================
 width = 0
@@ -15,6 +15,10 @@ isGenerated = False
 
 current = None
 target = None
+
+sound_move = None
+sound_target = None
+sound_wall = None
 
 # ================ Helper functions =================    
  
@@ -84,35 +88,60 @@ def generate():
       if cell is not None:
          cell.drawBlock()
          cell.drawGrid()   
-    
+   
 
+def moveSound(next=None):
+   global target
+   global sound_move
+   global sound_target
+
+   if next is target:
+      sound_target.play()
+   elif next is None:
+      sound_wall.play()
+   else:
+      sound_move.play()
+   
+   
 def moveUp():
    global current
    if (current.neighbors[0] is not None) and (current.walls[0] is False):
       next = current.neighbors[0]
+      moveSound(next)
       interpolateMovement(next)
+   else:
+      moveSound()
 
 
 def moveRight():
    global current
    if (current.neighbors[1] is not None) and (current.walls[1] is False):
       next = current.neighbors[1]
+      moveSound(next)
       interpolateMovement(next)
-
+   else:
+      moveSound()
+    
     
 def moveDown():
    global current
    if (current.neighbors[2] is not None) and (current.walls[2] is False):
       next = current.neighbors[2]
+      moveSound(next)
       interpolateMovement(next)
-
+   else:
+      moveSound()
+         
     
 def moveLeft():
    global current
    if (current.neighbors[3] is not None) and (current.walls[3] is False):
       next = current.neighbors[3]
+      moveSound(next)
       interpolateMovement(next)
-
+   else:
+      moveSound()
+      
 
 def interpolateMovement(next):
    global current 
@@ -123,7 +152,7 @@ def interpolateMovement(next):
    nextX = next.col * w
    nextY = next.row * w
 
-   steps = 50  # number of steps to interpolate
+   steps = 25  # number of steps to interpolate
    
    # linear interpolation function
    lerp = lambda a, b, t: a + t * (b - a)
@@ -350,7 +379,7 @@ def render():
          break
       
       # Animate
-      time.sleep(0.1)
+      time.sleep(0.05)
    
    # after generated, draw the target
    if target is not None:
