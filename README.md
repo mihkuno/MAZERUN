@@ -6,10 +6,11 @@ Maze runner prototype game built using Processing Python.
 
 1. Clone this repository `git clone https://github.com/mihkuno/MAZERUN.git`
 2. Navigate to the library `cd MAZERUN`
-3. Create a virtual environment `python -m venv venv`
-4. Activate the virtual environment `./venv/Scripts/activate`
-5. Install required libraries `pip install -r requirements.txt`
-6. Start the main program `python main.py`
+3. Use version `Python 3.12.1`
+4. Create a virtual environment `python -m venv venv`
+5. Activate the virtual environment `./venv/Scripts/activate`
+6. Install required libraries `pip install -r requirements.txt`
+7. Start the main program `python main.py`
 
 ## Development: Dijkstra Algorithm
 
