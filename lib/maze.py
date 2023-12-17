@@ -4,8 +4,9 @@ import time
 import sys
 
 # ================ Global variables =================
-width = 0
-height = 0
+area = 0
+xOffset = 0
+yOffset = 0
 screen = None
 
 stack = []
@@ -145,12 +146,11 @@ def moveLeft():
 
 def interpolateMovement(next):
    global current 
-   global w
 
-   startX = current.col * w
-   startY = current.row * w
-   nextX = next.col * w
-   nextY = next.row * w
+   startX = current.x
+   startY = current.y
+   nextX = next.x
+   nextY = next.y
 
    steps = 25  # number of steps to interpolate
    
@@ -230,10 +230,13 @@ def eventListener():
 class Cell:
    def __init__(self, col, row):
       global w      
+      global xOffset
+      global yOffset
+      
       self.row = row
       self.col = col
-      self.x = self.col * w
-      self.y = self.row * w
+      self.x = self.col * w + xOffset
+      self.y = self.row * w + yOffset
       
       self.visited = False
       self.walls = [True,True,True,True] # t-r-b-l
@@ -313,12 +316,11 @@ def create():
    global current
    global grid
    global w
-   global width
-   global height
- 
+   global area
+
    # TODO: add padding to the canvas
-   cols = width  // w
-   rows = height // w
+   cols = area  // w
+   rows = area // w
 
    # check if index is outside the grid based on rows and cols
    outbounds = lambda c, r: r<0 or c<0 or r>rows-1 or c>cols-1
@@ -357,8 +359,6 @@ def render():
    global target
    global grid
    global isGenerated
-   global height
-   global width
    global w
    
    # Show all the cell grid and block
@@ -379,7 +379,7 @@ def render():
          break
       
       # Animate
-      time.sleep(0.05)
+      # time.sleep(0.05)
    
    # after generated, draw the target
    if target is not None:
