@@ -2,6 +2,7 @@ import pygame
 import random
 import time
 import sys
+import heapq
 
 # ================ Global variables =================
 
@@ -273,6 +274,22 @@ class Cell:
       self.visited = False
       self.walls = [True,True,True,True] # t-r-b-l
       self.neighbors = [None, None, None, None] # t-r-b-l
+      self.distance = float('inf')
+      self.predecessor = None
+
+
+   def highlight(self, is_start = False, is_target = False):
+      x = self.x
+      y = self.y
+      color = (255, 255, 0, 128)
+      inner_margin = 4  # Adjustable
+
+      # Create a new surface with per-pixel alpha
+      highlight_surface = pygame.Surface((w - 2 * inner_margin, w - 2 * inner_margin), pygame.SRCALPHA)
+      highlight_surface.fill(color)  # Fill the surface with semi-transparent color
+
+      # Blit the semi-transparent surface onto the main screen
+      screen.blit(highlight_surface, (x + inner_margin, y + inner_margin))
 
    
    def drawGrid(self):
@@ -340,6 +357,22 @@ class Cell:
          return randCell   
     
       return None   
+   
+   def walls_between(self, neighbor):
+        # Check and return if there is a wall between this cell and its neighbor
+        if self.row - neighbor.row == 1:  
+            return self.walls[0]
+        if self.row - neighbor.row == -1: 
+            return self.walls[2]
+        if self.col - neighbor.col == -1:
+            return self.walls[1]
+        if self.col - neighbor.col == 1:
+            return self.walls[3]
+        return False
+   
+   def __lt__(self, other):
+        # Compare cells based on their distance or any other unique attribute
+        return self.distance < other.distance
       
           
 # ================ Create Grid ======================
@@ -417,7 +450,17 @@ def render():
    if target is not None:
       target.drawTarget()
       target.drawGrid()
-   
+
+
+   # Find the shortest path using Dijkstra's algorithm
+   shortest_path = dijkstra(grid, grid[0], target)
+
+
+   for cell in shortest_path:
+      is_start = cell == grid[0]
+      is_target = cell == target
+      cell.highlight(is_start=is_start, is_target=is_target) # highlights the path
+
    # set up the framerate clock
    clock = pygame.time.Clock()
 
@@ -431,3 +474,41 @@ def render():
       # Cap the frame rate
       clock.tick(60)
       
+
+# dijkstra algorithm
+def dijkstra(grid, start, target):
+    # Initialize distances and predecessors
+    for cell in grid:
+        cell.distance = float('inf')
+        cell.predecessor = None
+    start.distance = 0
+
+    # Create a priority queue and add the start cell
+    queue = []
+    heapq.heappush(queue, (start.distance, start))
+
+    while queue:
+        current_distance, current_cell = heapq.heappop(queue)
+
+        # Check if we have reached the target
+        if current_cell == target:
+            break
+
+        # Explore neighbors
+        for neighbor in current_cell.neighbors:
+            if neighbor and not neighbor.walls_between(current_cell):
+                distance = current_distance + 1
+                if distance < neighbor.distance:
+                    neighbor.distance = distance
+                    neighbor.predecessor = current_cell
+                    heapq.heappush(queue, (neighbor.distance, neighbor))
+
+    # Reconstruct the shortest path
+    path = []
+    current = target
+    while current:
+        path.append(current)
+        current = current.predecessor
+    path.reverse()  # The path is constructed backwards, so reverse it
+    return path
+
