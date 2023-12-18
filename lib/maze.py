@@ -15,6 +15,8 @@ screen = None
 sound_move = None
 sound_target = None
 sound_wall = None
+sound_clear = None
+sound_trail = None
 # ===============================
 
 # ====== private variables ======
@@ -31,75 +33,7 @@ target = None
 
 
 
-# ================ Helper functions =================    
- 
-def removeWalls(curr, next):
-   x = curr.col - next.col
-   y = curr.row - next.row
-   
-   if x == 1: 
-      curr.walls[3] = False
-      next.walls[1] = False
-      
-   elif x == -1:
-      curr.walls[1] = False
-      next.walls[3] = False
-   
-   if y == 1: 
-      curr.walls[0] = False
-      next.walls[2] = False
-      
-   elif y == -1:
-      curr.walls[2] = False
-      next.walls[0] = False
-        
-
-def generate():
-   global stack
-   global grid
-   global current
-   global target
-   global isGenerated
-   
-   # STEP 1: mark the current cell as visited
-   current.visited = True
-   
-   # STEP 2
-   # choose randomly one of the unvisited neighbors
-   next = current.getRandNeighbor()
-
-   if next is not None:
-      # STEP 3: push the current cell to the stack
-      stack.append(current)
-      
-      # STEP 4: remove the wall between the current and chosen cell
-      removeWalls(current, next)
-      
-      # STEP 5: set the chosen cell as the current cell
-      current = next
-      
-   elif len(stack) > 0:
-      current = stack[-1]
-      stack.pop()
-      
-   elif not isGenerated: # when maze is generated 
-      isGenerated = True # set this to true
-      
-      # select random cell in grid and set as the target cell
-      length = len(grid) - 1
-      randIx = random.randint(0, length)
-      target = grid[randIx]
-   
-   # draw the current 
-   current.drawFocus()
-   current.drawGrid()
-   
-   # redraw current neighbors
-   for cell in current.neighbors:
-      if cell is not None:
-         cell.drawBlock()
-         cell.drawGrid()   
-   
+# ================ Control functions =================    
 
 def moveSound(next=None):
    global target
@@ -178,7 +112,7 @@ def interpolateMovement(next):
       
       # if not target, redraw current
       if current is not target:
-         current.drawBlock()
+         current.drawVisit()
       
       elif current is finish and alreadyFinish:
          current.drawFinish()
@@ -257,41 +191,36 @@ def eventListener():
       elif event.type == pygame.KEYDOWN:
          onKeyType(event)
  
-     
-# ================ Cell Class =======================
+  
+# ============== Min-Heap CellNode Class ===============
 
-class Cell:
+class CellNode:
    def __init__(self, col, row):
       global w      
       global xOffset
       global yOffset
       
+      # == cell attributes ==
       self.row = row
       self.col = col
       self.x = self.col * w + xOffset
       self.y = self.row * w + yOffset
+      self.w = w
       
       self.visited = False
       self.walls = [True,True,True,True] # t-r-b-l
       self.neighbors = [None, None, None, None] # t-r-b-l
+      
+      # == node attributes ==
       self.distance = float('inf')
       self.predecessor = None
 
 
-   def highlight(self, is_start = False, is_target = False):
-      x = self.x
-      y = self.y
-      color = (255, 255, 0, 128)
-      inner_margin = 4  # Adjustable
+   # less than operator for class instances
+   def __lt__(self, other): 
+      return self.distance < other.distance
 
-      # Create a new surface with per-pixel alpha
-      highlight_surface = pygame.Surface((w - 2 * inner_margin, w - 2 * inner_margin), pygame.SRCALPHA)
-      highlight_surface.fill(color)  # Fill the surface with semi-transparent color
-
-      # Blit the semi-transparent surface onto the main screen
-      screen.blit(highlight_surface, (x + inner_margin, y + inner_margin))
-
-   
+      
    def drawGrid(self):
       x = self.x
       y = self.y
@@ -313,11 +242,55 @@ class Cell:
       if self.walls[3]: # bl-tl left
          pygame.draw.line(screen, color, (x,y+w), (x, y), strokeWeight) 
          
-      
-   def drawBlock(self):
+         
+   def drawVisit(self):
       x = self.x
       y = self.y
       color = (239, 239, 239) 
+      pygame.draw.rect(screen, color, (x, y, w, w))
+   
+   
+   def drawTrail(self):
+      x = self.x
+      y = self.y 
+      w  = self.w
+      color = (253, 203, 110)
+      
+      if self.w <= 10:
+         pygame.draw.rect(screen, color, (x, y, w, w))
+      elif self.w < 20:
+         w *= 0.25
+         x += self.w // 2
+         y += self.w // 2
+         pygame.draw.circle(screen, color, (x, y), w)
+      elif self.w < 30:
+         w *= 0.2
+         x += self.w // 2
+         y += self.w // 2
+         pygame.draw.circle(screen, color, (x, y), w)
+      elif self.w < 80: 
+         w *= 0.15
+         x += self.w // 2
+         y += self.w // 2
+         pygame.draw.circle(screen, color, (x, y), w)
+      else:
+         w = 10
+         x += self.w // 2
+         y += self.w // 2
+         pygame.draw.circle(screen, color, (x, y), w)
+         
+      
+   def drawSearch(self):
+      x = self.x
+      y = self.y
+      color = (178, 190, 195)
+      pygame.draw.rect(screen, color, (x, y, w, w))
+            
+            
+   def drawBlock(self):
+      x = self.x
+      y = self.y
+      color = (99, 110, 114)
       pygame.draw.rect(screen, color, (x, y, w, w))
          
          
@@ -342,7 +315,7 @@ class Cell:
       pygame.draw.rect(screen, color, (x, y, w, w))
       
          
-   def getRandNeighbor(self):
+   def getRandomNeighbor(self):
       # randomly select unvisited neighbors
       selection = []
    
@@ -351,30 +324,124 @@ class Cell:
             selection.append(cell)
                 
       if len(selection) > 0:
-         length = len(selection) - 1
-         randIx = random.randint(0, length)
+         randIx = random.randint(0, len(selection)-1)
          randCell = selection[randIx]
          return randCell   
     
       return None   
    
-   def walls_between(self, neighbor):
-        # Check and return if there is a wall between this cell and its neighbor
-        if self.row - neighbor.row == 1:  
-            return self.walls[0]
-        if self.row - neighbor.row == -1: 
-            return self.walls[2]
-        if self.col - neighbor.col == -1:
-            return self.walls[1]
-        if self.col - neighbor.col == 1:
-            return self.walls[3]
-        return False
    
-   def __lt__(self, other):
-        # Compare cells based on their distance or any other unique attribute
-        return self.distance < other.distance
+   def hasWallBetween(self, other):
+      x = self.col - other.col
+      y = self.row - other.row
       
-          
+      if y ==  1: return self.walls[0]
+      if y == -1: return self.walls[2]
+      if x == -1: return self.walls[1]
+      if x ==  1: return self.walls[3]
+      return False
+   
+   
+   def removeWallBetween(self, other):
+      x = self.col - other.col
+      y = self.row - other.row
+      
+      if x == 1: 
+         self.walls[3] = False
+         other.walls[1] = False
+         
+      elif x == -1:
+         self.walls[1] = False
+         other.walls[3] = False
+      
+      if y == 1: 
+         self.walls[0] = False
+         other.walls[2] = False
+         
+      elif y == -1:
+         self.walls[2] = False
+         other.walls[0] = False
+      
+      sound_clear.play()
+         
+ 
+# ================== Generate Grid ===================    
+
+
+def generate():
+   global stack
+   global grid
+   global current
+   global target
+   global isGenerated
+   
+   # refresh the cell of current and previous
+   # and their neighboring cells on the grid
+   def refresh(next):
+      global current
+      current.drawVisit()
+      current.drawGrid()
+      
+      for cell in current.neighbors:
+         if cell is not None and not cell.visited:
+            cell.drawBlock()
+            cell.drawGrid()
+            
+      current = next
+      
+      for cell in current.neighbors:
+         if cell is not None and not cell.visited:
+            cell.drawSearch()
+            cell.drawGrid()
+            
+      current.drawFocus()
+      current.drawGrid()      
+      
+      # Update the display
+      pygame.display.flip()
+      
+      # Animate
+      time.sleep(0.05)
+
+
+   while True:
+            
+      # STEP 1: mark the current cell as visited
+      current.visited = True
+      
+      # STEP 2A:
+      # choose randomly one of the unvisited neighbors
+      next = current.getRandomNeighbor()
+
+      if next is not None:
+         # STEP 3: push the current cell to the stack
+         stack.append(current)
+         
+         # STEP 4: remove the wall between the current and chosen cell
+         current.removeWallBetween(next)
+         
+         # STEP 5: set the chosen cell as the current cell
+         refresh(next)
+         
+      # STEP 2B:
+      # if no neighbors, pop a cell from the stack 
+      # and make it the current cell
+      elif len(stack) > 0:
+         next = stack[-1]
+         stack.pop()
+         
+         # STEP 5: set the chosen cell as the current cell
+         refresh(next)
+         
+      elif not isGenerated: # when maze is generated 
+         isGenerated = True # set this to true
+         
+         # select random cell in grid and set as the target cell
+         randIx = random.randint(0, len(grid)-1)
+         target = grid[randIx]
+         break
+      
+      
 # ================ Create Grid ======================
 
 def create():
@@ -396,7 +463,7 @@ def create():
    # append all the cells to grid
    for row in range(rows):
       for col in range(cols):
-         cell = Cell(col, row)
+         cell = CellNode(col, row)
          grid.append(cell)
 
    # after creating the grid,
@@ -426,44 +493,24 @@ def render():
    global isGenerated
    global w
    
-   # Show all the cell grid and block
+   # show all the cell grid and block
    for cell in grid:
       cell.drawBlock()
       cell.drawGrid()
-      
-   # maze render
-   while True:      
-      
-      # Generate maze
-      generate()
-               
-      # Update the display
-      pygame.display.flip()
-      
-      if isGenerated:
-         break
-      
-      # Animate
-      # time.sleep(0.05)
+    
+   # generate maze
+   generate()
    
    # after generated, draw the target
    if target is not None:
       target.drawTarget()
       target.drawGrid()
-
-
-   # Find the shortest path using Dijkstra's algorithm
-   shortest_path = dijkstra(grid, grid[0], target)
-
-
-   for cell in shortest_path:
-      is_start = cell == grid[0]
-      is_target = cell == target
-      cell.highlight(is_start=is_start, is_target=is_target) # highlights the path
+      
+   solve(target)
 
    # set up the framerate clock
    clock = pygame.time.Clock()
-
+   
    # start game controls
    while True:
       eventListener()
@@ -473,42 +520,105 @@ def render():
       
       # Cap the frame rate
       clock.tick(60)
+
+
+# =============== Dijkstra Solver ====================
+
+def solve(target):
+   global grid
+   global current
+   
+   previous = None
+   isSolved = False
+   searched = []
+   queue = []
+   
+   # set the start distance to 0
+   current.distance = 0
+
+   # create a priority queue and add the start node
+   heapq.heappush(queue, (current.distance, current))
+   
+   # current the first cell searched
+   # since it is pushed to the queue
+   current.drawSearch()
+   current.drawGrid()
       
+   # start the search algorithm
+   while queue:
+      
+      if isSolved: break               
+      
+      # get the node with the smallest distance
+      distance, cell = heapq.heappop(queue)
+      
+      # check next neighbor
+      for neighbor in cell.neighbors:
+         if neighbor and not neighbor.hasWallBetween(cell):
+            
+            # used later to reset searched cells
+            searched.append(neighbor)
+            
+            # calculate the distance to the neighbor
+            distance = distance + 1
+            # update the distance if necessary
+            if distance < neighbor.distance:
+               neighbor.distance = distance
+               neighbor.predecessor = cell
+               
+               # add the neighbor to the queue
+               heapq.heappush(queue, (neighbor.distance, neighbor))
+      
+               # draw the search
+               neighbor.drawFocus()
+               neighbor.drawGrid()
+               if previous is not None:
+                  previous.drawSearch()
+                  previous.drawGrid()
+               previous = neighbor
+               
+               # then update display
+               sound_move.play()
+               pygame.display.flip()
+               time.sleep(0.05)
+               
+            # check if reached the target
+            if neighbor == target:
+               isSolved = True
+               break
 
-# dijkstra algorithm
-def dijkstra(grid, start, target):
-    # Initialize distances and predecessors
-    for cell in grid:
-        cell.distance = float('inf')
-        cell.predecessor = None
-    start.distance = 0
+   # == reset searched cells ==
+   for cell in searched:
+      cell.drawVisit()
+      cell.drawGrid()
+   if previous is not None:      
+      previous.drawSearch()
+      previous.drawGrid()
+   current.drawFocus()
+   current.drawGrid()
+   target.drawTarget()
+   target.drawGrid()
 
-    # Create a priority queue and add the start cell
-    queue = []
-    heapq.heappush(queue, (start.distance, start))
-
-    while queue:
-        current_distance, current_cell = heapq.heappop(queue)
-
-        # Check if we have reached the target
-        if current_cell == target:
-            break
-
-        # Explore neighbors
-        for neighbor in current_cell.neighbors:
-            if neighbor and not neighbor.walls_between(current_cell):
-                distance = current_distance + 1
-                if distance < neighbor.distance:
-                    neighbor.distance = distance
-                    neighbor.predecessor = current_cell
-                    heapq.heappush(queue, (neighbor.distance, neighbor))
-
-    # Reconstruct the shortest path
-    path = []
-    current = target
-    while current:
-        path.append(current)
-        current = current.predecessor
-    path.reverse()  # The path is constructed backwards, so reverse it
-    return path
-
+   # == reconstruct the shortest path ==
+   path = []     # start from target node
+   cell = target # backtrace to start node
+   # while loop to trace back to the start
+   while cell:
+      path.append(cell)
+      cell = cell.predecessor
+   # its constructed backwards, 
+   path.reverse() # so reverse it
+   
+   # == draw the shortest path ==
+   for cell in path:
+      current.drawFocus()
+      current.drawGrid()
+      cell.drawTrail()
+      cell.drawGrid()
+      
+      # then update display
+      sound_trail.play()
+      pygame.display.flip()
+      time.sleep(0.05)   
+   
+   sound_target.play()
