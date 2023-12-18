@@ -4,22 +4,31 @@ import time
 import sys
 
 # ================ Global variables =================
+
+# ==== configure in main.py ====
+w = 0
 area = 0
 xOffset = 0
 yOffset = 0
 screen = None
-
-stack = []
-grid = []        
-w = 100
-isGenerated = False
-
-current = None
-target = None
-
 sound_move = None
 sound_target = None
 sound_wall = None
+# ===============================
+
+# ====== private variables ======
+stack = []
+grid  = []        
+
+isGenerated = False
+alreadyFinish = False
+
+current = None
+finish = None
+target = None
+# ===============================
+
+
 
 # ================ Helper functions =================    
  
@@ -93,16 +102,19 @@ def generate():
 
 def moveSound(next=None):
    global target
+   global finish
    global sound_move
    global sound_target
 
-   if next is target:
-      sound_target.play()
+   if next is finish and finish is not None:
+      sound_move.play()
    elif next is None:
       sound_wall.play()
+   elif next is target:
+      sound_target.play()
    else:
       sound_move.play()
-   
+      
    
 def moveUp():
    global current
@@ -145,7 +157,10 @@ def moveLeft():
       
 
 def interpolateMovement(next):
-   global current 
+   global current
+   global alreadyFinish
+   global target
+   global finish
 
    startX = current.x
    startY = current.y
@@ -163,7 +178,11 @@ def interpolateMovement(next):
       # if not target, redraw current
       if current is not target:
          current.drawBlock()
+      
+      elif current is finish and alreadyFinish:
+         current.drawFinish()
          
+                  
       # create a new current block to interpolate next
       t = step / steps
       currentX = lerp(startX, nextX, t)
@@ -172,12 +191,18 @@ def interpolateMovement(next):
       color = (235, 77, 75) # focus color
       pygame.draw.rect(screen, color, (currentX, currentY, w, w))    
       
-      # draw the finish block on top of current
-      if current is target:
+      
+      if current is finish and not alreadyFinish:
          current.drawFinish()
+ 
       # draw the finish block on top of next
-      elif next is target:
+      elif current is target and target is not finish:
+         current.drawFinish()
+ 
+      # draw the finish block on top of next
+      elif next is target and target is not finish:
          next.drawFinish()
+            
          
       # redraw the cell grid
       current.drawGrid()
@@ -189,6 +214,13 @@ def interpolateMovement(next):
       # Pause briefly to show the movement (you can adjust the duration)
       pygame.time.delay(1)    
 
+   
+   if next is target and target is not finish:
+      finish = target 
+   
+   elif next is target and target is finish:
+      alreadyFinish = True
+      
    # Update the current cell
    current = next
    
@@ -282,7 +314,7 @@ class Cell:
    def drawTarget(self):
       x = self.x
       y = self.y
-      color = (52, 216, 217)
+      color = (116, 185, 255)
       pygame.draw.rect(screen, color, (x, y, w, w))
       
    
