@@ -21,13 +21,19 @@ if __name__ == "__main__":
    pygame.display.set_icon(icon)
    screen.fill(background)
    
-   maze.sound_target = pygame.mixer.Sound("./assets/audio/target.ogg")
+   # set maze grid
+   maze.screen = screen
+   maze.area = 400
+   maze.w = 100
+   
+   # center the maze
+   maze.xOffset = (width - maze.w * (maze.area // maze.w)) // 2
+   maze.yOffset = (height - maze.w * (maze.area // maze.w)) // 2 - 20
+
+   # load sounds
+   maze.sound_target = pygame.mixer.Sound("./assets/audio/join.ogg")
    maze.sound_move = pygame.mixer.Sound("./assets/audio/tap.wav") 
    maze.sound_wall = pygame.mixer.Sound("./assets/audio/wall.wav")
-   maze.screen = screen
-   maze.xOffset = 50
-   maze.yOffset = 50
-   maze.area = 500
-   maze.w = 20
+   
    maze.create()
    maze.render()
