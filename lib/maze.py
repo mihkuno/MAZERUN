@@ -134,7 +134,7 @@ def interpolateMovement(next):
       currentX = lerp(startX, nextX, t)
       currentY = lerp(startY, nextY, t)
       
-      color = (235, 77, 75) # focus color
+      color = (237, 76, 103) # active color
       pygame.draw.rect(screen, color, (currentX, currentY, w, w))    
       
       
