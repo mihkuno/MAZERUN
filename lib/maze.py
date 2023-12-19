@@ -225,6 +225,7 @@ class CellNode:
    def drawGrid(self):
       x = self.x
       y = self.y
+      w  = self.w
       
       # handle edge borders    
       strokeWeight = 3
@@ -247,6 +248,7 @@ class CellNode:
    def drawVisit(self):
       x = self.x
       y = self.y
+      w  = self.w
       color = (239, 239, 239) 
       pygame.draw.rect(screen, color, (x, y, w, w))
    
@@ -256,34 +258,13 @@ class CellNode:
       y = self.y 
       w  = self.w
       color = (253, 203, 110)
+      pygame.draw.rect(screen, color, (x, y, w, w))
       
-      if self.w <= 10:
-         pygame.draw.rect(screen, color, (x, y, w, w))
-      elif self.w < 20:
-         w *= 0.25
-         x += self.w // 2
-         y += self.w // 2
-         pygame.draw.circle(screen, color, (x, y), w)
-      elif self.w < 30:
-         w *= 0.2
-         x += self.w // 2
-         y += self.w // 2
-         pygame.draw.circle(screen, color, (x, y), w)
-      elif self.w < 80: 
-         w *= 0.15
-         x += self.w // 2
-         y += self.w // 2
-         pygame.draw.circle(screen, color, (x, y), w)
-      else:
-         w = 10
-         x += self.w // 2
-         y += self.w // 2
-         pygame.draw.circle(screen, color, (x, y), w)
-         
       
    def drawSearch(self):
       x = self.x
       y = self.y
+      w  = self.w
       color = (178, 190, 195)
       pygame.draw.rect(screen, color, (x, y, w, w))
             
@@ -291,6 +272,7 @@ class CellNode:
    def drawBlock(self):
       x = self.x
       y = self.y
+      w  = self.w
       color = (99, 110, 114)
       pygame.draw.rect(screen, color, (x, y, w, w))
          
@@ -298,6 +280,7 @@ class CellNode:
    def drawFocus(self):
       x = self.x
       y = self.y
+      w  = self.w
       color = (235, 77, 75)
       pygame.draw.rect(screen, color, (x, y, w, w))
       
@@ -305,6 +288,7 @@ class CellNode:
    def drawTarget(self):
       x = self.x
       y = self.y
+      w  = self.w
       color = (116, 185, 255)
       pygame.draw.rect(screen, color, (x, y, w, w))
       
@@ -312,6 +296,7 @@ class CellNode:
    def drawFinish(self):
       x = self.x
       y = self.y
+      w  = self.w
       color = (162, 155, 254)
       pygame.draw.rect(screen, color, (x, y, w, w))
       
@@ -402,7 +387,7 @@ def generate():
       pygame.display.flip()
       
       # Animate
-      time.sleep(0.05)
+      # time.sleep(0.05)
 
 
    while True:
@@ -573,34 +558,30 @@ def solve(target):
                heapq.heappush(queue, (neighbor.distance, neighbor))
       
                # draw the search
-               neighbor.drawFocus()
-               neighbor.drawGrid()
+               if neighbor is not target:
+                  neighbor.drawFocus()
+                  neighbor.drawGrid()
+               else:
+                  # check if reached the target
+                  isSolved = True
+                  break
                if previous is not None:
                   previous.drawSearch()
                   previous.drawGrid()
                previous = neighbor
                
-               # then update display
+               # play move sound
                sound_move.play()
+               # then update display
                pygame.display.flip()
-               time.sleep(0.05)
+               # animate
+               time.sleep(0.02)
                
-            # check if reached the target
-            if neighbor == target:
-               isSolved = True
-               break
-
-   # == reset searched cells ==
-   for cell in searched:
-      cell.drawVisit()
-      cell.drawGrid()
-   if previous is not None:      
-      previous.drawSearch()
-      previous.drawGrid()
+   # == reset current ==
+   previous.drawSearch()
+   previous.drawGrid()
    current.drawFocus()
    current.drawGrid()
-   target.drawTarget()
-   target.drawGrid()
 
    # == reconstruct the shortest path ==
    path = []     # start from target node
@@ -614,14 +595,33 @@ def solve(target):
    
    # == draw the shortest path ==
    for cell in path:
-      current.drawFocus()
-      current.drawGrid()
-      cell.drawTrail()
-      cell.drawGrid()
-      
+      if (
+         cell is not current and 
+         cell is not target
+      ):
+         cell.drawTrail()
+         cell.drawGrid()
+
       # then update display
-      sound_trail.play()
       pygame.display.flip()
-      time.sleep(0.05)   
+      # play trail sound
+      sound_trail.play()
+      # animate
+      time.sleep(0.02)   
    
+   # == reset searched cells ==
+   for cell in searched:
+      if (
+         cell not in path and 
+         cell is not current and 
+         cell is not target
+      ):
+         cell.drawVisit()
+         cell.drawGrid()
+
+   # wait a short time
+   time.sleep(0.01)
+   # play target sound
    sound_target.play()
+   # then update display
+   pygame.display.flip()
