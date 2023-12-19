@@ -7,17 +7,16 @@ import heapq
 # ================ Global variables =================
 
 # ==== configure in main.py ====
-w = 0
-area = 0
 xOffset = 0
 yOffset = 0
+level = 0
+area = 0
 screen = None
 sound_move = None
 sound_target = None
 sound_wall = None
 sound_clear = None
 sound_trail = None
-# ===============================
 
 # ====== private variables ======
 stack = []
@@ -25,13 +24,16 @@ grid  = []
 searched = []
 
 isAllowControl = False
-alreadyFinish = False
 
 current = None
-finish = None
-target = None
-# ===============================
+target = []
+finish = []
+alreadyFinish = []
 
+
+# ======= level variables =======
+w = 0 # cell width
+targetLimit = None
 
 
 # ================ Control functions =================    
@@ -42,11 +44,11 @@ def moveSound(next=None):
    global sound_move
    global sound_target
 
-   if next is finish and finish is not None:
+   if next in finish and finish is not None:
       sound_move.play()
    elif next is None:
       sound_wall.play()
-   elif next is target:
+   elif next in target:
       sound_target.play()
    else:
       sound_move.play()
@@ -112,10 +114,10 @@ def interpolateMovement(next):
    for step in range(steps + 1):
       
       # if not target, redraw current
-      if current is not target:
+      if current not in target:
          current.drawVisit()
       
-      elif current is finish and alreadyFinish:
+      elif current in finish and alreadyFinish:
          current.drawFinish()
          
                   
@@ -128,18 +130,17 @@ def interpolateMovement(next):
       pygame.draw.rect(screen, color, (currentX, currentY, w, w))    
       
       
-      if current is finish and not alreadyFinish:
+      if current in finish and current not in alreadyFinish:
          current.drawFinish()
  
       # draw the finish block on top of next
-      elif current is target and target is not finish:
+      elif current in target and current not in finish:
          current.drawFinish()
  
       # draw the finish block on top of next
-      elif next is target and target is not finish:
+      elif next in target and next not in finish:
          next.drawFinish()
             
-         
       # redraw the cell grid
       current.drawGrid()
       next.drawGrid()
@@ -151,11 +152,11 @@ def interpolateMovement(next):
       pygame.time.delay(1)    
 
    
-   if next is target and target is not finish:
-      finish = target 
+   if next in target and next not in finish:
+      finish.append(next) 
    
-   elif next is target and target is finish:
-      alreadyFinish = True
+   elif next in target and next in finish:
+      alreadyFinish.append(next)
       
    # Update the current cell
    current = next
@@ -189,14 +190,16 @@ def eventListener():
             elif event.key == pygame.K_LEFT:  moveLeft()
             elif event.key == pygame.K_RIGHT: moveRight()
          
-         # hover the target cell
-         elif target and target.block.collidepoint(pygame.mouse.get_pos()):
-            pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
-            # on target click, solve the target cell
-            if event.type == pygame.MOUSEBUTTONDOWN:
-               pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_ARROW)
-               solve(current, target)
-         else: pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_ARROW)
+         # hover the target cells
+         for t in target:
+            if t and t.block.collidepoint(pygame.mouse.get_pos()):
+               pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
+               # on target click, solve the target cell
+               if event.type == pygame.MOUSEBUTTONDOWN:
+                  pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_ARROW)
+                  solve(current, t)
+               break
+            else: pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_ARROW)
   
   
 # ============== Min-Heap CellNode Class ===============
@@ -357,12 +360,13 @@ def generate():
    global grid
    global current
    global target
+   global targetLimit
    global isAllowControl
    
    # prevent user from controlling the maze
    isAllowControl = False
    
-   # get random cell in grid
+   # get random cell in grid as starting point
    cell = grid[random.randint(0, len(grid)-1)]
    
    # refresh the cell and its previous
@@ -425,14 +429,20 @@ def generate():
          refresh(next)
          
       elif not isAllowControl: # when maze is generated 
-         isAllowControl = True # allow user controls
+         # create count of targetLimit unique random numbers list
+         unique = random.sample(range(0, len(grid)), 3)
+
+         # create target cell list
+         for u in unique:
+            target.append(grid[u])
          
-         # select random cell in grid and set as the target cell
-         randIx = random.randint(0, len(grid)-1)
-         target = grid[randIx]
+         # allow user controls
+         isAllowControl = True 
+         
+         # generate is complete
          break
    
-   # clear cell
+   # clear initial cell
    cell.drawVisit()
    cell.drawGrid()
    
@@ -445,17 +455,15 @@ def generate():
       
    # allow user controls
    isAllowControl = True
-      
-      
+
+
 # ================ Create Grid ======================
 
 def create():
    global current
    global grid
-   global w
    global area
 
-   # TODO: add padding to the canvas
    cols = area // w
    rows = area // w
 
@@ -508,8 +516,9 @@ def render():
    
    # after generated, draw the target
    if target is not None:
-      target.drawTarget()
-      target.drawGrid()
+      for t in target:
+         t.drawTarget()
+         t.drawGrid()
       
    # set up the framerate clock
    clock = pygame.time.Clock()
@@ -527,9 +536,11 @@ def render():
 
 # =============== Dijkstra Solver ====================
 
-def solve(start, target):
+def solve(start, end):
    global grid
    global searched
+   global target
+   global finish
    global isAllowControl
 
    # prevent user from controlling the maze
@@ -546,7 +557,12 @@ def solve(start, target):
       cell.distance = float('inf')
       cell.predecessor = None
       
-      if cell is not start and cell is not target:
+      if (
+         cell is not start and 
+         cell is not end and
+         cell not in target and
+         cell not in finish
+      ):
          cell.drawVisit()
          cell.drawGrid()   
    
@@ -597,11 +613,11 @@ def solve(start, target):
                heapq.heappush(queue, (neighbor.distance, neighbor))
       
                # draw the search
-               if neighbor is not target:
+               if neighbor is not end:
                   neighbor.drawFocus()
                   neighbor.drawGrid()
                else:
-                  # check if reached the target
+                  # check if reached the end
                   isSolved = True
                   break
                # remove focus of previous cell
@@ -622,13 +638,14 @@ def solve(start, target):
       previous.drawSearch()
       previous.drawGrid()
       
+   # while trail is being drawn,
    # teleport focus to start position
    start.drawActive()
    start.drawGrid()
 
    # == reconstruct the shortest path ==
-                 # start from target node
-   cell = target # backtrace to start node
+                 # begin from end node
+   cell = end # backtrace to start node
    # while loop to trace back to the start
    while cell:
       path.append(cell)
@@ -653,7 +670,7 @@ def solve(start, target):
       # play trail sound
       sound_trail.play()
       # animate
-      time.sleep(0.02)   
+      time.sleep(0.08)   
    
    # reset searched cells 
    # that are not in path
@@ -661,13 +678,28 @@ def solve(start, target):
       if (
          cell not in path and 
          cell is not start and 
-         cell is not target
+         cell is not end and
+         cell not in target and
+         cell not in finish
       ):
          cell.drawVisit()
          cell.drawGrid()
+   
+   for cell in target:
+      cell.drawTarget()
+      cell.drawGrid()
+   
+   for cell in finish:
+      cell.drawFinish()
+      cell.drawGrid()
+   
+   # after trail is draw,
+   # teleport focus to start position
+   start.drawActive()
+   start.drawGrid()
 
    # wait a short time
-   time.sleep(0.1)
+   time.sleep(0.07)
    # play target sound
    sound_target.play()
    # then update display
