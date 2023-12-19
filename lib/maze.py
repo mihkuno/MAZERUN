@@ -188,8 +188,9 @@ def eventListener():
          sys.exit()
          
       # ==== Keyboard Events ====
-      elif event.type == pygame.KEYDOWN:
-         onKeyType(event)
+      if isGenerated: # game controls
+         if event.type == pygame.KEYDOWN:
+            onKeyType(event)
  
   
 # ============== Min-Heap CellNode Class ===============
@@ -405,6 +406,8 @@ def generate():
 
 
    while True:
+      # fix window freeze
+      eventListener()
             
       # STEP 1: mark the current cell as visited
       current.visited = True
