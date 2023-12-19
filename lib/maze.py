@@ -356,51 +356,54 @@ def generate():
    # prevent user from controlling the maze
    isAllowControl = False
    
-   # refresh the cell of current and previous
+   # get random cell in grid
+   cell = grid[random.randint(0, len(grid)-1)]
+   
+   # refresh the cell and its previous
    # and their neighboring cells on the grid
    def refresh(next):
-      global current
-      current.drawVisit()
-      current.drawGrid()
+      nonlocal cell
+      cell.drawVisit()
+      cell.drawGrid()
       
-      for cell in current.neighbors:
-         if cell is not None and not cell.visited:
-            cell.drawBlock()
-            cell.drawGrid()
+      for n in cell.neighbors:
+         if n is not None and not n.visited:
+            n.drawBlock()
+            n.drawGrid()
             
-      current = next
+      cell = next
       
-      for cell in current.neighbors:
-         if cell is not None and not cell.visited:
-            cell.drawSearch()
-            cell.drawGrid()
+      for n in cell.neighbors:
+         if n is not None and not n.visited:
+            n.drawSearch()
+            n.drawGrid()
             
-      current.drawFocus()
-      current.drawGrid()      
+      cell.drawFocus()
+      cell.drawGrid()      
       
       # update the display
       pygame.display.flip()
       
-      # Animate
-      # time.sleep(0.05)
+      # animate
+      time.sleep(0.05)
 
    while True:
       # fix window freeze
       eventListener()
             
       # STEP 1: mark the current cell as visited
-      current.visited = True
+      cell.visited = True
       
       # STEP 2A:
       # choose randomly one of the unvisited neighbors
-      next = current.getRandomNeighbor()
+      next = cell.getRandomNeighbor()
 
       if next is not None:
          # STEP 3: push the current cell to the stack
-         stack.append(current)
+         stack.append(cell)
          
          # STEP 4: remove the wall between the current and chosen cell
-         current.removeWallBetween(next)
+         cell.removeWallBetween(next)
          
          # STEP 5: set the chosen cell as the current cell
          refresh(next)
@@ -422,6 +425,17 @@ def generate():
          randIx = random.randint(0, len(grid)-1)
          target = grid[randIx]
          break
+   
+   # clear cell
+   cell.drawVisit()
+   cell.drawGrid()
+   
+   # show current cell
+   current.drawFocus()
+   current.drawGrid()      
+      
+   # update the display
+   pygame.display.flip()
       
    # allow user controls
    isAllowControl = True
@@ -436,7 +450,7 @@ def create():
    global area
 
    # TODO: add padding to the canvas
-   cols = area  // w
+   cols = area // w
    rows = area // w
 
    # check if index is outside the grid based on rows and cols
@@ -465,9 +479,9 @@ def create():
       if bCellIx != -1: cell.neighbors[2] = grid[bCellIx]
       if lCellIx != -1: cell.neighbors[3] = grid[lCellIx]
       
-   # set first cell of grid as current visited
-   current = grid[0]
-
+   # set middle cell of grid as current visited
+   current = grid[index(cols//2, rows//2)]
+   
 
 # ================ Game Loop ========================
 
