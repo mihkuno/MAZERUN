@@ -259,7 +259,7 @@ class CellNode:
       
    
    def drawTrail(self):
-      color = (253, 203, 110)
+      color = (247, 215, 148)
       self.block = pygame.Rect((self.x, self.y, self.w, self.w))
       pygame.draw.rect(screen, color, self.block)
       
@@ -276,8 +276,14 @@ class CellNode:
       pygame.draw.rect(screen, color, self.block)
         
          
+   def drawActive(self):
+      color = (237, 76, 103)
+      self.block = pygame.Rect((self.x, self.y, self.w, self.w))
+      pygame.draw.rect(screen, color, self.block)
+      
+      
    def drawFocus(self):
-      color = (235, 77, 75)
+      color = (76, 209, 55)
       self.block = pygame.Rect((self.x, self.y, self.w, self.w))
       pygame.draw.rect(screen, color, self.block)
       
@@ -385,7 +391,7 @@ def generate():
       pygame.display.flip()
       
       # animate
-      time.sleep(0.05)
+      # time.sleep(0.05)
 
    while True:
       # fix window freeze
@@ -431,7 +437,7 @@ def generate():
    cell.drawGrid()
    
    # show current cell
-   current.drawFocus()
+   current.drawActive()
    current.drawGrid()      
       
    # update the display
@@ -581,6 +587,7 @@ def solve(start, target):
             
             # calculate the distance to the neighbor
             distance = distance + 1
+            
             # update the distance if necessary
             if distance < neighbor.distance:
                neighbor.distance = distance
@@ -608,15 +615,15 @@ def solve(start, target):
                # then update display
                pygame.display.flip()
                # animate
-               time.sleep(0.02)
+               time.sleep(0.05)
                
    # remove focus of previous cell
    if previous is not None:
       previous.drawSearch()
       previous.drawGrid()
       
-   # teleport focus to start cell
-   start.drawFocus()
+   # teleport focus to start position
+   start.drawActive()
    start.drawGrid()
 
    # == reconstruct the shortest path ==
