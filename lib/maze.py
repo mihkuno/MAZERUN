@@ -353,7 +353,6 @@ class CellNode:
  
 # ================== Generate Grid ===================    
 
-
 def generate():
    global stack
    global grid
@@ -534,7 +533,8 @@ def solve(target):
       
    # start the search algorithm
    while queue:
-      
+      # fix window freeze
+      eventListener()
       if isSolved: break               
       
       # get the node with the smallest distance
@@ -595,6 +595,8 @@ def solve(target):
    
    # == draw the shortest path ==
    for cell in path:
+      # fix window freeze
+      eventListener()
       if (
          cell is not current and 
          cell is not target
