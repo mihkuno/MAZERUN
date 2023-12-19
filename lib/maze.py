@@ -22,8 +22,9 @@ sound_trail = None
 # ====== private variables ======
 stack = []
 grid  = []        
+searched = []
 
-isGenerated = False
+isAllowControl = False
 alreadyFinish = False
 
 current = None
@@ -158,40 +159,45 @@ def interpolateMovement(next):
       
    # Update the current cell
    current = next
-   
 
-def onKeyType(event):
-   global isGenerated
-   # if esc pressed, close program
-   if event.key == pygame.K_ESCAPE:
-      pygame.quit()
-      sys.exit()
-   
-   if isGenerated:
-      if event.key == pygame.K_UP:      moveUp()
-      elif event.key == pygame.K_DOWN:  moveDown()
-      elif event.key == pygame.K_LEFT:  moveLeft()
-      elif event.key == pygame.K_RIGHT: moveRight()
-   
-   else: 
-      print("Key Pressed:", pygame.key.name(event.key))
       
-   
-def eventListener():
-   # ==== Mouse Events ====
-   # mouse_x, mouse_y = pygame.mouse.get_pos()
+def eventListener():   
+   global current
+   global target
+   global isAllowControl
    
    for event in pygame.event.get():
-      # ==== On Exit Event ====
+      
+      # ==== Exit Event ====
       if event.type == pygame.QUIT:
          pygame.quit()
          sys.exit()
          
-      # ==== Keyboard Events ====
-      if isGenerated: # game controls
+      elif event.type == pygame.KEYDOWN:
+         # esc pressed, close program
+         if event.key == pygame.K_ESCAPE:
+            pygame.quit()
+            sys.exit()
+         
+      # == Game Controls ==
+      if isAllowControl: 
+         
+         # move the current cell
          if event.type == pygame.KEYDOWN:
-            onKeyType(event)
- 
+            if   event.key == pygame.K_UP:      moveUp()
+            elif event.key == pygame.K_DOWN:  moveDown()
+            elif event.key == pygame.K_LEFT:  moveLeft()
+            elif event.key == pygame.K_RIGHT: moveRight()
+         
+         # hover the target cell
+         elif target and target.block.collidepoint(pygame.mouse.get_pos()):
+            pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
+            # on target click, solve the target cell
+            if event.type == pygame.MOUSEBUTTONDOWN:
+               pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_ARROW)
+               solve(current, target)
+         else: pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_ARROW)
+  
   
 # ============== Min-Heap CellNode Class ===============
 
@@ -204,12 +210,13 @@ class CellNode:
       # == cell attributes ==
       self.row = row
       self.col = col
-      self.x = self.col * w + xOffset
-      self.y = self.row * w + yOffset
-      self.w = w
+      self.x   = self.col * w + xOffset
+      self.y   = self.row * w + yOffset
+      self.w   = w
       
-      self.visited = False
-      self.walls = [True,True,True,True] # t-r-b-l
+      self.block     = None
+      self.visited   = False
+      self.walls     = [True,True,True,True] # t-r-b-l
       self.neighbors = [None, None, None, None] # t-r-b-l
       
       # == node attributes ==
@@ -246,59 +253,45 @@ class CellNode:
          
          
    def drawVisit(self):
-      x = self.x
-      y = self.y
-      w  = self.w
       color = (239, 239, 239) 
-      pygame.draw.rect(screen, color, (x, y, w, w))
-   
+      self.block = pygame.Rect((self.x, self.y, self.w, self.w))
+      pygame.draw.rect(screen, color, self.block)
+      
    
    def drawTrail(self):
-      x = self.x
-      y = self.y 
-      w  = self.w
       color = (253, 203, 110)
-      pygame.draw.rect(screen, color, (x, y, w, w))
+      self.block = pygame.Rect((self.x, self.y, self.w, self.w))
+      pygame.draw.rect(screen, color, self.block)
       
       
    def drawSearch(self):
-      x = self.x
-      y = self.y
-      w  = self.w
       color = (178, 190, 195)
-      pygame.draw.rect(screen, color, (x, y, w, w))
+      self.block = pygame.Rect((self.x, self.y, self.w, self.w))
+      pygame.draw.rect(screen, color, self.block)  
             
             
    def drawBlock(self):
-      x = self.x
-      y = self.y
-      w  = self.w
       color = (99, 110, 114)
-      pygame.draw.rect(screen, color, (x, y, w, w))
-         
+      self.block = pygame.Rect((self.x, self.y, self.w, self.w))
+      pygame.draw.rect(screen, color, self.block)
+        
          
    def drawFocus(self):
-      x = self.x
-      y = self.y
-      w  = self.w
       color = (235, 77, 75)
-      pygame.draw.rect(screen, color, (x, y, w, w))
+      self.block = pygame.Rect((self.x, self.y, self.w, self.w))
+      pygame.draw.rect(screen, color, self.block)
       
       
    def drawTarget(self):
-      x = self.x
-      y = self.y
-      w  = self.w
       color = (116, 185, 255)
-      pygame.draw.rect(screen, color, (x, y, w, w))
+      self.block = pygame.Rect((self.x, self.y, self.w, self.w))
+      pygame.draw.rect(screen, color, self.block)
       
    
    def drawFinish(self):
-      x = self.x
-      y = self.y
-      w  = self.w
       color = (162, 155, 254)
-      pygame.draw.rect(screen, color, (x, y, w, w))
+      self.block = pygame.Rect((self.x, self.y, self.w, self.w))
+      pygame.draw.rect(screen, color, self.block)
       
          
    def getRandomNeighbor(self):
@@ -358,7 +351,10 @@ def generate():
    global grid
    global current
    global target
-   global isGenerated
+   global isAllowControl
+   
+   # prevent user from controlling the maze
+   isAllowControl = False
    
    # refresh the cell of current and previous
    # and their neighboring cells on the grid
@@ -382,12 +378,11 @@ def generate():
       current.drawFocus()
       current.drawGrid()      
       
-      # Update the display
+      # update the display
       pygame.display.flip()
       
       # Animate
       # time.sleep(0.05)
-
 
    while True:
       # fix window freeze
@@ -420,13 +415,16 @@ def generate():
          # STEP 5: set the chosen cell as the current cell
          refresh(next)
          
-      elif not isGenerated: # when maze is generated 
-         isGenerated = True # set this to true
+      elif not isAllowControl: # when maze is generated 
+         isAllowControl = True # allow user controls
          
          # select random cell in grid and set as the target cell
          randIx = random.randint(0, len(grid)-1)
          target = grid[randIx]
          break
+      
+   # allow user controls
+   isAllowControl = True
       
       
 # ================ Create Grid ======================
@@ -477,7 +475,7 @@ def render():
    global current
    global target
    global grid
-   global isGenerated
+   global isAllowControl
    global w
    
    # show all the cell grid and block
@@ -493,8 +491,6 @@ def render():
       target.drawTarget()
       target.drawGrid()
       
-   solve(target)
-
    # set up the framerate clock
    clock = pygame.time.Clock()
    
@@ -511,31 +507,53 @@ def render():
 
 # =============== Dijkstra Solver ====================
 
-def solve(target):
+def solve(start, target):
    global grid
-   global current
+   global searched
+   global isAllowControl
+
+   # prevent user from controlling the maze
+   isAllowControl = False
+   
+   # disktra can solve all short paths to all targets at once from the start position
+   # the problem is that when start moves, the distance and predecessor of all cells 
+   # is still pointing from the original position from when the search was started.  
+   # so we need to reset the distance and predecessor of all cells
+   # because the new position has a new path to the target
+
+   # reset previous searched cells   
+   for cell in searched:
+      cell.distance = float('inf')
+      cell.predecessor = None
+      
+      if cell is not start and cell is not target:
+         cell.drawVisit()
+         cell.drawGrid()   
    
    previous = None
    isSolved = False
    searched = []
    queue = []
+   path = []
    
-   # set the start distance to 0
-   current.distance = 0
+   # the start distance is 0
+   start.distance = 0
+   start.predecessor = None
 
    # create a priority queue and add the start node
-   heapq.heappush(queue, (current.distance, current))
+   heapq.heappush(queue, (start.distance, start))
    
-   # current the first cell searched
+   # start the first cell searched
    # since it is pushed to the queue
-   current.drawSearch()
-   current.drawGrid()
+   start.drawSearch()
+   start.drawGrid()
       
    # start the search algorithm
    while queue:
+      if isSolved: break      
+      
       # fix window freeze
-      eventListener()
-      if isSolved: break               
+      eventListener()         
       
       # get the node with the smallest distance
       distance, cell = heapq.heappop(queue)
@@ -565,6 +583,7 @@ def solve(target):
                   # check if reached the target
                   isSolved = True
                   break
+               # remove focus of previous cell
                if previous is not None:
                   previous.drawSearch()
                   previous.drawGrid()
@@ -577,14 +596,17 @@ def solve(target):
                # animate
                time.sleep(0.02)
                
-   # == reset current ==
-   previous.drawSearch()
-   previous.drawGrid()
-   current.drawFocus()
-   current.drawGrid()
+   # remove focus of previous cell
+   if previous is not None:
+      previous.drawSearch()
+      previous.drawGrid()
+      
+   # teleport focus to start cell
+   start.drawFocus()
+   start.drawGrid()
 
    # == reconstruct the shortest path ==
-   path = []     # start from target node
+                 # start from target node
    cell = target # backtrace to start node
    # while loop to trace back to the start
    while cell:
@@ -597,8 +619,9 @@ def solve(target):
    for cell in path:
       # fix window freeze
       eventListener()
+      
       if (
-         cell is not current and 
+         cell is not start and 
          cell is not target
       ):
          cell.drawTrail()
@@ -611,19 +634,22 @@ def solve(target):
       # animate
       time.sleep(0.02)   
    
-   # == reset searched cells ==
+   # reset searched cells 
+   # that are not in path
    for cell in searched:
       if (
          cell not in path and 
-         cell is not current and 
+         cell is not start and 
          cell is not target
       ):
          cell.drawVisit()
          cell.drawGrid()
 
    # wait a short time
-   time.sleep(0.01)
+   time.sleep(0.1)
    # play target sound
    sound_target.play()
    # then update display
    pygame.display.flip()
+   # allow user controls
+   isAllowControl = True
