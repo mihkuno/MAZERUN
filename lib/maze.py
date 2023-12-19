@@ -9,7 +9,6 @@ import heapq
 # ==== configure in main.py ====
 xOffset = 0
 yOffset = 0
-level = 0
 area = 0
 screen = None
 sound_move = None
@@ -18,22 +17,20 @@ sound_wall = None
 sound_clear = None
 sound_trail = None
 
-# ====== private variables ======
-stack = []
-grid  = []        
+# ======= level variables =======
+alreadyFinish = []
 searched = []
-
-isAllowControl = False
-
-current = None
 target = []
 finish = []
-alreadyFinish = []
-
-
-# ======= level variables =======
+stack = []
+grid  = []        
+current = None
 w = 0 # cell width
+
+# ======= level limits =======
+isAllowControl = False
 targetLimit = None
+level = None
 
 
 # ================ Control functions =================    
@@ -430,7 +427,7 @@ def generate():
          
       elif not isAllowControl: # when maze is generated 
          # create count of targetLimit unique random numbers list
-         unique = random.sample(range(0, len(grid)), 3)
+         unique = random.sample(range(0, len(grid)), targetLimit)
 
          # create target cell list
          for u in unique:
@@ -460,9 +457,27 @@ def generate():
 # ================ Create Grid ======================
 
 def create():
-   global current
+   global isAllowControl
+   global alreadyFinish
+   global searched
+   global target
+   global finish
+   global stack
    global grid
    global area
+   global current
+   
+   # prevent user from controlling the maze
+   isAllowControl = False
+   
+   # reset level variables
+   alreadyFinish = []
+   searched = []
+   target = []
+   finish = []
+   stack = []
+   grid  = []        
+   current = None
 
    cols = area // w
    rows = area // w
@@ -500,11 +515,13 @@ def create():
 # ================ Game Loop ========================
 
 def render():
+   global isAllowControl
    global current
    global target
+   global level
    global grid
-   global isAllowControl
    global w
+   
    
    # show all the cell grid and block
    for cell in grid:
@@ -526,22 +543,25 @@ def render():
    # start game controls
    while True:
       eventListener()
-      
-      # Update the display
+         
+      # update the display
       pygame.display.flip()
       
-      # Cap the frame rate
+      # cap the frame rate
       clock.tick(60)
+      
+      if len(target) == len(finish):
+         level += 1
+         break
 
 
 # =============== Dijkstra Solver ====================
 
 def solve(start, end):
-   global grid
+   global isAllowControl
    global searched
    global target
    global finish
-   global isAllowControl
 
    # prevent user from controlling the maze
    isAllowControl = False
