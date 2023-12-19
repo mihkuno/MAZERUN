@@ -22,6 +22,8 @@ if __name__ == "__main__":
    screen.fill(background)
    
    # load sounds
+   maze.sound_level = pygame.mixer.Sound("./assets/audio/begin.ogg")
+   maze.sound_found = pygame.mixer.Sound("./assets/audio/notify.wav")
    maze.sound_target = pygame.mixer.Sound("./assets/audio/join.ogg")
    maze.sound_move = pygame.mixer.Sound("./assets/audio/tap.wav") 
    maze.sound_wall = pygame.mixer.Sound("./assets/audio/wall.wav")

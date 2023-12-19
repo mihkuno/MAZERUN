@@ -16,6 +16,8 @@ sound_target = None
 sound_wall = None
 sound_clear = None
 sound_trail = None
+sound_found = None
+sound_level = None
 
 # ======= level variables =======
 alreadyFinish = []
@@ -36,15 +38,24 @@ level = None
 # ================ Control functions =================    
 
 def moveSound(next=None):
+   global current
    global target
    global finish
    global sound_move
    global sound_target
-
+   
+   isNextLevel = (
+      next in target and 
+      next not in finish and 
+      len(target)-1 == len(finish)
+   )
+   
    if next in finish and finish is not None:
       sound_move.play()
    elif next is None:
       sound_wall.play()
+   elif isNextLevel:
+      sound_level.play()
    elif next in target:
       sound_target.play()
    else:
@@ -721,7 +732,7 @@ def solve(start, end):
    # wait a short time
    time.sleep(0.07)
    # play target sound
-   sound_target.play()
+   sound_found.play()
    # then update display
    pygame.display.flip()
    # allow user controls
