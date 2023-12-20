@@ -1,6 +1,5 @@
 import pygame
 import sys
-import subprocess
 
 pygame.init()
 pygame.mixer.init()
@@ -101,8 +100,7 @@ while True:
         elif isStartBtnFocused and event.type == pygame.MOUSEBUTTONDOWN:
             startBtnColor = (84, 233, 139)
             sound_click.play()
-            subprocess.Popen(["python", "main.py"], shell=True)
-            sys.exit()
+            print('hello world')
             
         elif isStartBtnFocused and event.type == pygame.MOUSEBUTTONUP:
             startBtnColor = GREEN
