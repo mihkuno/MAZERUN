@@ -61,7 +61,10 @@ while True:
             sys.exit()
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if play_button.collidepoint(pygame.mouse.get_pos()):
+<<<<<<< HEAD
+=======
                 print("Play button clicked!")
+>>>>>>> parent of 456e520 (animate flat main menu)
                 pygame.quit()
                 subprocess.run(["python", "main.py"])  # Replace "main.py" with your actual file
             elif settings_button.collidepoint(pygame.mouse.get_pos()):
