@@ -1,4 +1,5 @@
 import sys
+import subprocess
 sys.path.append('./lib')
 
 import pygame
@@ -60,7 +61,7 @@ if __name__ == "__main__":
          maze.targetLimit = 7
          
       elif maze.level == 6: 
-         print('You Escaped!')
+         subprocess.Popen(["python", "end.py"])
          break
       
       elif maze.level == -1:
