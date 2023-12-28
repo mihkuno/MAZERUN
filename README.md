@@ -2,6 +2,16 @@
 
 Maze runner prototype game built using Pygame.
 
+## Geting Started
+
+1. Clone this repository `git clone https://github.com/mihkuno/MAZERUN.git`
+2. Navigate to the library `cd MAZERUN`
+3. Use version `Python 3.12.1`
+4. Create a virtual environment `python -m venv venv`
+5. Activate the virtual environment `./venv/Scripts/activate`
+6. Install required libraries `pip install -r requirements.txt`
+7. Start the main program `python main.py`
+
 ## Introduction
 
 Welcome to Mazerun, a maze game where smart algorithms create challenging puzzles for you to solve. The mazes are designed to test your path tracing skills, and Mazerun comes with Dijkstra’s algorithm that can help you navigate through them. It's a straightforward yet engaging experience – can you conquer the five level maze on your own, or will you rely on the algorithm to guide you to the finish?
@@ -16,14 +26,16 @@ The primary aim of this project is to develop a maze generator employing the dep
 -  Maze solver using dijkstra's shortest path algorithm
 -  Menu screen, controls, level difficulty, and sounds!
 
-## Geting Started
+### Algorithms
 
-1. Clone this repository `git clone https://github.com/mihkuno/MAZERUN.git`
-2. Navigate to the library `cd MAZERUN`
-3. Use version `Python 3.12.1`
-4. Create a virtual environment `python -m venv venv`
-5. Activate the virtual environment `./venv/Scripts/activate`
-6. Install required libraries `pip install -r requirements.txt`
-7. Start the main program `python main.py`
+Modified Depth-First Search
+Dijkstra’s Shortest Path
+Linear Search
+
+### Data Structures
+
+Min-Heap Binary Tree
+Array
+Stack
 
 https://github.com/mihkuno/MAZERUN/assets/26486389/2649d86b-5ebb-40bf-b534-8a39c62fef42

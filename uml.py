@@ -13,20 +13,20 @@
 | + distance:    float                             |
 | + predecessor: CellNode                          |
 +--------------------------------------------------+
-| - __init__(col: int, row: int)                   |
-| - __lt__(other: CellNode): bool                  |
-| + drawGrid():   None                             |
-| + drawVisit():  None                             |
-| + drawTrail():  None                             |
-| + drawSearch(): None                             |
-| + drawBlock():  None                             |
-| + drawActive(): None                             |
-| + drawFocus():  None                             |
-| + drawTarget(): None                             |
-| + drawFinish(): None                             |
-| + getRandomNeighbor(): CellNode                  |
-| + hasWallBetween(other: CellNode):    bool       |
-| + removeWallBetween(other: CellNode): None       | 
+| - __init__(col: int, row: int)                   |   Tc: O(1) | Sc: O(1)
+| - __lt__(other: CellNode): bool                  |   Tc: O(1) | Sc: O(1)
+| + drawGrid():   None                             |   Tc: O(1) | Sc: O(1)
+| + drawVisit():  None                             |   Tc: O(1) | Sc: O(1)
+| + drawTrail():  None                             |   Tc: O(1) | Sc: O(1)
+| + drawSearch(): None                             |   Tc: O(1) | Sc: O(1)
+| + drawBlock():  None                             |   Tc: O(1) | Sc: O(1)
+| + drawActive(): None                             |   Tc: O(1) | Sc: O(1)
+| + drawFocus():  None                             |   Tc: O(1) | Sc: O(1)
+| + drawTarget(): None                             |   Tc: O(1) | Sc: O(1)
+| + drawFinish(): None                             |   Tc: O(1) | Sc: O(1)
+| + getRandomNeighbor(): CellNode                  |   Tc: O(1) | Sc: O(1)
+| + hasWallBetween(other: CellNode):    bool       |   Tc: O(1) | Sc: O(1)
+| + removeWallBetween(other: CellNode): None       |   Tc: O(1) | Sc: O(1)
 +--------------------------------------------------+
 
 
@@ -61,16 +61,16 @@
 |   + targetLimit:    int                          |
 |   + level:          int                          |
 +--------------------------------------------------+
-|   - moveSound(next: Optional[CellNode]):   None  | 
-|   - interpolateMovement(next: CellNode):   None  |
-|   - solve(start: CellNode, end: CellNode): None  |
-|   - refresh(next: CellNode): None                |
-|   - eventListener(): None                        |
-|   - generate():  None                            |
-|   + create():    None                            |
-|   + render():    None                            |
-|   - moveUp():    None                            |
-|   - moveDown():  None                            |
-|   - moveLeft():  None                            |
-|   - moveRight(): None                            |
+|   - solve(start: CellNode, end: CellNode): None  |   Tc: O(V + E + P log P) | Sc: O(V)
+|   - eventListener(): None                        |   Tc: O(N + M) | Sc: O(1)
+|   + render():    None                            |   Tc: O(V + E) | Sc: O(1)
+|   - generate():  None                            |   Tc: O(V + E) | Sc: O(V)
+|   + create():    None                            |   Tc: O(V) | Sc: O(1)
+|   - moveUp():    None                            |   Tc: O(1) | Sc: O(1)
+|   - moveDown():  None                            |   Tc: O(1) | Sc: O(1)
+|   - moveLeft():  None                            |   Tc: O(1) | Sc: O(1)
+|   - moveRight(): None                            |   Tc: O(1) | Sc: O(1)
+|   - refresh(next: CellNode): None                |   Tc: O(1) | Sc: O(1)
+|   - moveSound(next: Optional[CellNode]):   None  |   Tc: O(1) | Sc: O(1)
+|   - interpolateMovement(next: CellNode):   None  |   Tc: O(1) | Sc: O(1)
 +--------------------------------------------------+
